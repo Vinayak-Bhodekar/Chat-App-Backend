@@ -23,7 +23,7 @@ connectDB()
 
 const server = http.createServer(app)
 
-export const io = new Server(server, {
+export const socket = new Server(server, {
     cors: {
         origin: "http://localhost:5173",
         methods: ["GET","POST"],
@@ -33,7 +33,7 @@ export const io = new Server(server, {
 
 
 
-io.use((socket,next) => {
+socket.use((socket,next) => {
     const token = socket.handshake?.auth?.token
 
     if (!token) {
@@ -52,7 +52,7 @@ io.use((socket,next) => {
 
 const onlineUsers = new Map();
 
-io.on("connect",(socket) => {
+socket.on("connect",(socket) => {
     //socketHandler(io,socket)
 
     const userId = socket.userId;
@@ -63,7 +63,7 @@ io.on("connect",(socket) => {
 
     if(!onlineUsers.has(userId)) {
         onlineUsers.set(userId, new Set());
-        io.emit("user:status", {userId, status:"Online"});
+        socket.emit("user:status", {userId, status:"Online"});
     }
 
     onlineUsers.get(userId).add(socket.id);
@@ -87,7 +87,7 @@ io.on("connect",(socket) => {
         socket.to(roomId._id).emit("user:stopTyping",{userId:socket.userId})
     })
 
-    socket.on("sendMessage",async ({roomId, senderId, content}) => handleSendMessage(io,roomId, senderId,content))
+    socket.on("sendMessage",async ({roomId, senderId, content}) => handleSendMessage(socket,roomId, senderId,content))
 
     socket.on("sendRequest",async ({userId,receiverId}) => handleSendRequest(userId,receiverId))
 
@@ -108,7 +108,7 @@ io.on("connect",(socket) => {
 
         if (sockets.size === 0) {
             onlineUsers.delete(userId);
-            io.emit("user:status", {
+            socket.emit("user:status", {
                 userId,
                 status: "Offline"
             });

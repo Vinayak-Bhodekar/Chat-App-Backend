@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 import OTPGenerator from "../utils/OTPGenerator.js";
 import sendOTP from "../utils/sendEmails.js";
 import { Request } from "../models/request.models.js";
-import { io } from "../server.js"
+import { socket } from "../server.js"
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 
@@ -184,7 +184,7 @@ const logOutUser = asyncHandler(async (req, res) => {
   );
 
   if (user) {
-    io.emit("user:status", { userId, status: "Offline" });
+    socket.emit("user:status", { userId, status: "Offline" });
   }
 
   const options = {

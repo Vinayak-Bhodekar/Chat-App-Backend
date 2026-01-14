@@ -3,10 +3,10 @@ import { Room } from "../models/room.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { io } from "../server.js"
+import { socket } from "../server.js"
 import { User } from "../models/user.model.js"
 import { Request } from "../models/request.models.js"
-import socket from "../../frontend/src/socket.js"
+//import socket from "../../frontend/src/socket.js"
 import { RoomKey } from "../models/roomKey.model.js"
 
 const handleJoinRoom = (socket, {roomId, userId}) => {
