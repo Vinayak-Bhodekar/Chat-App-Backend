@@ -20,7 +20,7 @@ import userRoutes from "./routes/user.router.js"
 import roomRoutes from "./routes/room.router.js"
 import messageRoutes from "./routes/message.router.js"
 import requests from "./routes/request.router.js"
-import roomKey from "./routes/roomKey.router.js"
+import roomKey from "./routes/roomkey.router.js"
 
 
 
