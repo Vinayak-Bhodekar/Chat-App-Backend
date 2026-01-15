@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 const app = express()
 
 app.use(cors({
-  origin: "http://localhost:5173",  // exact frontend origin
+  origin: "https://chat-app-backend-polc.onrender.com",  // exact frontend origin
   //methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true                // allow cookies/credentials
 }))
