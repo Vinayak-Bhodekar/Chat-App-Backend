@@ -349,8 +349,6 @@ const OTPsender = asyncHandler(async (req,res) => {
 
     const {email} = req.body
     
-    
-
     if(!email) {
         throw new ApiError(400,"email is required")
     }
@@ -372,8 +370,6 @@ const OTPsender = asyncHandler(async (req,res) => {
         .status(200)
         .json(new ApiResponse(200,"OTP is sent to Email successfully"))
 
-
-        
     } catch (error) {
         console.log("Cant Send OTP",error)
         throw new ApiError(400,"Cant Send OTP",error)
