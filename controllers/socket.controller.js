@@ -79,7 +79,7 @@ const handleDisconnect = async (userId,socketId,onlineUsers) => {
     if(sockets.size === 0) {
       onlineUsers.delete(userId)
 
-      io.emit("user:status", {
+      socket.emit("user:status", {
         userId,
         status:"Offline"
       })
@@ -98,7 +98,7 @@ const handleConnected = async (userId,socketId) => {
       socketId:socketId
     })
 
-    io.emit("user:status",{userId,status:"Online"})
+    socket.emit("user:status",{userId,status:"Online"})
     console.log("user connected:",socketId)
     console.log("Total clients:", io.engine.clientsCount);
 
@@ -153,7 +153,7 @@ const handleSendRequest = async (userId,receiverId) => {
       console.log("error in making request")
     }
     
-    io.to(user?.socketId).emit("incomming-request",newRequest)
+    socket.to(user?.socketId).emit("incomming-request",newRequest)
 
   } catch (error) {
     console.log("cant create the request", error)
@@ -210,7 +210,7 @@ const handleAcceptRequest = async (userId,requestId,obj) => {
       console.log("error in roomKey Creation")
     }
     
-    io.to(user.socketId).emit("friend-added", {
+    socket.to(user.socketId).emit("friend-added", {
       contact:{
       friend:friendUser,
       room:room,
@@ -222,7 +222,7 @@ const handleAcceptRequest = async (userId,requestId,obj) => {
 
 
 
-    io.to(friendUser.socketId).emit("friend-added",{
+    socket.to(friendUser.socketId).emit("friend-added",{
       contact:{
       friend:await User.findById(userId).select(
         "_id userName firstName lastName profile"
@@ -262,7 +262,7 @@ const handleMessageSeen = async (roomId, userId) => {
       }
     );
 
-    io.to(roomId).emit("message-read", {
+    socket.to(roomId).emit("message-read", {
       roomId,
       seenBy: userId,
     });
