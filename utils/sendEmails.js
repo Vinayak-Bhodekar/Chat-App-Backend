@@ -1,32 +1,28 @@
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 import { ApiError } from "./ApiError.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const sendOTP = async (to, otp) => {
-  try {
-    await resend.emails.send({
-      from: `Chat-app <${process.env.RESEND_FROM_EMAIL}>`,
-      to,
-      subject: "Your OTP Code",
-      html: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Your OTP Code</h2>
-          <p>Your OTP is:</p>
-          <h1>${otp}</h1>
-          <p>This OTP will expire in <b>5 minutes</b>.</p>
-        </div>
-      `,
-    });
-
-    console.log("OTP sent to", to);
-  } catch (error) {
-    console.error("Error sending OTP:", error);
-    throw new ApiError(500, "Failed to send OTP email", error);
-  }
-};
+await sgMail.send({
+  to,
+  from: {
+    email: process.env.SENDGRID_SENDER,
+    name: "Chat App"
+  },
+  subject: "Your Chat App OTP Code",
+  html: `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Chat App Verification</h2>
+      <p>Your One-Time Password (OTP) is:</p>
+      <h1>${otp}</h1>
+      <p>This code will expire in 5 minutes.</p>
+      <hr/>
+      <small>If you did not request this, please ignore this email.</small>
+    </div>
+  `,
+});
 
 export default sendOTP;
