@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 const verifyToken = asyncHandler(async (req, res, next) => {
     const token = req.cookies?.accessToken || req.header("authorization")?.replace("Bearer ","")
     if(!token) {
-        throw new ApiError(401,"Unauthorized! Please login to access this resource.")
+        throw new ApiError(401,"Unauthorized! token is required")
     }
 
     try {
@@ -18,7 +18,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
         const user = await User.findById(decodedToken.id).select("-password")
 
         if(!user) {
-            throw new ApiError(401,"Unauthorized! Please login to access this resource.")
+            throw new ApiError(401,"Unauthorized! user not find in database.")
         }
 
         req.user = user

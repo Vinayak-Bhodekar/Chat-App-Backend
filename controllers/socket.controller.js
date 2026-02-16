@@ -100,7 +100,7 @@ const handleConnected = async (userId,socketId) => {
 
     socket.emit("user:status",{userId,status:"Online"})
     console.log("user connected:",socketId)
-    console.log("Total clients:", io.engine.clientsCount);
+    //console.log("Total clients:", io.engine.clientsCount);
 
 
 
@@ -110,6 +110,7 @@ const handleConnected = async (userId,socketId) => {
 }
 
 const handleSendRequest = async (userId,receiverId) => {
+  console.log("Request send called")
   if(!receiverId) {
     console.log("A receiver Id is required")
     return;
