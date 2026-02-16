@@ -191,12 +191,13 @@ const logOutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite:"none",
   };
 
   res
     .status(200)
-    .cookie("refreshToken", null, options)
-    .cookie("accessToken", null, options)
+    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", options)
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
