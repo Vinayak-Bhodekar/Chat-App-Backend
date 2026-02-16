@@ -35,6 +35,7 @@ export const socket = new Server(server, {
 
 socket.use((socket,next) => {
     const token = socket.handshake?.auth?.token
+    console.log("socket-",socket)
 
     if (!token) {
         console.log("⚠️ No token provided, connecting as guest");

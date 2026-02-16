@@ -152,9 +152,10 @@ const handleSendRequest = async (userId,receiverId) => {
 
     if(!newRequest) {
       console.log("error in making request")
+      return;
     }
     
-    socket.to(user?.socketId).emit("incomming-request",newRequest)
+    socket.to(user?.socketId).emit("incomming-request",{newRequest})
 
   } catch (error) {
     console.log("cant create the request", error)
