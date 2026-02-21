@@ -9,10 +9,10 @@ import { Request } from "../models/request.models.js"
 //import socket from "../../frontend/src/socket.js"
 import { RoomKey } from "../models/roomKey.model.js"
 
-const handleJoinRoom = (socket, {roomId, userId}) => {
+const handleJoinRoom = (socket, { roomId, userId }) => {
   socket.join(roomId)
   console.log(`${userId} joined room: ${roomId}`)
-  socket.to(roomId).emit("userJoined", {userId})
+  socket.to(roomId).emit("userJoined", { userId })
 }
 
 const handleSendMessage = async (io, roomId, senderId, content) => {
@@ -46,10 +46,10 @@ const handleSendMessage = async (io, roomId, senderId, content) => {
       createdAt: message.createdAt
     };
 
-    // 🔴 LIVE CHAT (if user opened chat)
+    //LIVE CHAT (if user opened chat)
     io.to(roomId.toString()).emit("newMessage", payload);
 
-    // 🔵 UNREAD NOTIFICATION (even if chat closed)
+    // UNREAD NOTIFICATION (even if chat closed)
     io.to(`user:${receiverId}`).emit("newMessage-notification", {
       room: roomId.toString(),
       sender: senderId.toString()
@@ -61,62 +61,62 @@ const handleSendMessage = async (io, roomId, senderId, content) => {
 };
 
 
-const handleTyping = (roomId,userId) => {
-  socket.to(roomId).emit("userTyping", {userId})
+const handleTyping = (roomId, userId) => {
+  socket.to(roomId).emit("userTyping", { userId })
 }
 
-const handleStopTyping = (socket, {roomId,userId}) => {
-  socket.to(roomId).emit("userStoppedTyping", {userId})
+const handleStopTyping = (socket, { roomId, userId }) => {
+  socket.to(roomId).emit("userStoppedTyping", { userId })
 }
 
-const handleDisconnect = async (userId,socketId,onlineUsers) => {
+const handleDisconnect = async (userId, socketId, onlineUsers) => {
   try {
     const sockets = onlineUsers.get(userId)
-    if(!sockets) return;
+    if (!sockets) return;
 
     sockets.delete(socket.id);
 
-    if(sockets.size === 0) {
+    if (sockets.size === 0) {
       onlineUsers.delete(userId)
 
       socket.emit("user:status", {
         userId,
-        status:"Offline"
+        status: "Offline"
       })
     }
 
     console.log("❌ User disconnected:", socketId);
   } catch (error) {
-    console.log("error in disconnecting",error)
+    console.log("error in disconnecting", error)
   }
 }
 
-const handleConnected = async (userId,socketId) => {
+const handleConnected = async (userId, socketId) => {
   try {
-    const user = await User.findByIdAndUpdate(userId,{
-      status:"Online",
-      socketId:socketId
+    const user = await User.findByIdAndUpdate(userId, {
+      status: "Online",
+      socketId: socketId
     })
 
-    socket.emit("user:status",{userId,status:"Online"})
-    console.log("user connected:",socketId)
+    socket.emit("user:status", { userId, status: "Online" })
+    console.log("user connected:", socketId)
     //console.log("Total clients:", io.engine.clientsCount);
 
 
 
   } catch (error) {
-    console.log("error in connecting",error)
+    console.log("error in connecting", error)
   }
 }
 
-const handleSendRequest = async (userId,receiverId) => {
+const handleSendRequest = async (userId, receiverId) => {
   console.log("Request send called")
-  if(!receiverId) {
+  if (!receiverId) {
     console.log("A receiver Id is required")
     return;
   }
 
-  if(!userId) {
+  if (!userId) {
     console.log("A user Id is required")
     return;
   }
@@ -125,37 +125,37 @@ const handleSendRequest = async (userId,receiverId) => {
     const existedRequest = await Request.findOneAndDelete({
       $or: [
         {
-          sender:userId,
+          sender: userId,
           receiver: receiverId
         },
         {
-          sender:receiverId,
-          receiver:userId
+          sender: receiverId,
+          receiver: userId
         }
       ]
     })
 
-    console.log(existedRequest,"hiiii")
+    console.log(existedRequest, "hiiii")
 
     const user = await User.findById(receiverId)
 
-    if(!user) {
+    if (!user) {
       console.log("not valid user Id")
       return;
     }
 
     const newRequest = await Request.create({
-      sender:userId,
-      receiver:receiverId,
-      status:"pending"
+      sender: userId,
+      receiver: receiverId,
+      status: "pending"
     })
 
-    if(!newRequest) {
+    if (!newRequest) {
       console.log("error in making request")
       return;
     }
-    
-    socket.to(user?.socketId).emit("incomming-request",{newRequest})
+
+    socket.to(user?.socketId).emit("incomming-request", { newRequest })
 
   } catch (error) {
     console.log("cant create the request", error)
@@ -163,30 +163,30 @@ const handleSendRequest = async (userId,receiverId) => {
 
 }
 
-const handleAcceptRequest = async (userId,requestId,obj) => {
-  
+const handleAcceptRequest = async (userId, requestId, obj) => {
+
   try {
     const request = await Request.findById(requestId)
-    
+
     const friendId = request.sender
-    if(!request) {
-        console.log("no such request found");
-        return;
+    if (!request) {
+      console.log("no such request found");
+      return;
     }
-    
+
     request.status = "accepted"
 
-    await request.save({validateBeforeSave:false})
+    await request.save({ validateBeforeSave: false })
 
     let room = await Room.findOne({
-        members:{$all:[userId,friendId]}
+      members: { $all: [userId, friendId] }
     })
 
-    if(!room) {
-        room = await Room.create({
-            members:[userId,friendId],
-            isGroupChat:false
-        })
+    if (!room) {
+      room = await Room.create({
+        members: [userId, friendId],
+        isGroupChat: false
+      })
     }
 
     const friendUser = await User.findById(friendId).select(
@@ -196,50 +196,50 @@ const handleAcceptRequest = async (userId,requestId,obj) => {
     const user = await User.findById(userId)
 
     let roomKey = await RoomKey.create({
-      participants:[friendUser?._id,user?._id],
-      roomId:room?._id,
-      encryptedRoomKeys:[{
-        user:obj[0]?.user,
-        encryptedAESKey:obj[0].encryptedAESKey
-      },{
-        user:obj[1]?.user,
-        encryptedAESKey:obj[1].encryptedAESKey
+      participants: [friendUser?._id, user?._id],
+      roomId: room?._id,
+      encryptedRoomKeys: [{
+        user: obj[0]?.user,
+        encryptedAESKey: obj[0].encryptedAESKey
+      }, {
+        user: obj[1]?.user,
+        encryptedAESKey: obj[1].encryptedAESKey
       }
-    ]
+      ]
     })
 
-    if(!roomKey) {
+    if (!roomKey) {
       console.log("error in roomKey Creation")
     }
-    
+
     socket.to(user.socketId).emit("friend-added", {
-      contact:{
-      friend:friendUser,
-      room:room,
-      name:friendUser.userName,
-      avatar:friendUser.profile,
-      isGroup:false
+      contact: {
+        friend: friendUser,
+        room: room,
+        name: friendUser.userName,
+        avatar: friendUser.profile,
+        isGroup: false
       }
     })
 
 
 
-    socket.to(friendUser.socketId).emit("friend-added",{
-      contact:{
-      friend:await User.findById(userId).select(
-        "_id userName firstName lastName profile"
-      ),
-      room:room,
-      name:user.userName,
-      avatar:user.profile,
-      isGroup:false
+    socket.to(friendUser.socketId).emit("friend-added", {
+      contact: {
+        friend: await User.findById(userId).select(
+          "_id userName firstName lastName profile"
+        ),
+        room: room,
+        name: user.userName,
+        avatar: user.profile,
+        isGroup: false
       }
     })
 
     console.log("Request accepted Successfully")
 
   } catch (error) {
-      console.log("error in accept request",error)
+    console.log("error in accept request", error)
   }
 }
 
@@ -275,6 +275,50 @@ const handleMessageSeen = async (roomId, userId) => {
   }
 };
 
+const handleDeleteContact = async (roomId) => {
+  if (!roomId) {
+    throw new ApiError(400, "roomId is required");
+  }
+
+  try {
+    const room = await Room.findById(roomId);
+    if (!room) return;
+
+    const [user1Id, user2Id] = room.members;
+
+    // Delete messages
+    await Message.deleteMany({ room: roomId });
+
+    // Delete room keys
+    await RoomKey.deleteMany({ roomId });
+
+    // Delete request
+    await Request.deleteOne({
+      $or: [
+        { sender: user1Id, receiver: user2Id },
+        { sender: user2Id, receiver: user1Id }
+      ]
+    });
+
+    // Delete room
+    await Room.findByIdAndDelete(roomId);
+
+    const user1 = await User.findById(user1Id);
+    const user2 = await User.findById(user2Id);
+
+    if (user1?.socketId) {
+      socket.to(user1.socketId).emit("contact-delete", { roomId });
+    }
+
+    if (user2?.socketId) {
+      socket.to(user2.socketId).emit("contact-delete", { roomId });
+    }
+
+  } catch (error) {
+    console.error("Error while deleting contact:", error);
+    throw error;
+  }
+};
 
 export {
   handleJoinRoom,
@@ -285,5 +329,6 @@ export {
   handleConnected,
   handleSendRequest,
   handleAcceptRequest,
-  handleMessageSeen
+  handleMessageSeen,
+  handleDeleteContact
 };
