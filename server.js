@@ -97,7 +97,10 @@ socket.on("connect", (socket) => {
 
     socket.on("messages:seen", async ({ roomId, userId }) => handleMessageSeen(roomId, userId))
 
-    socket.on("deleteContact", async ({ roomId }) => handleDeleteContact(roomId))
+    socket.on("deleteContact", async ({ roomId }) => {
+        console.log("deleteContact socket called",roomId)
+        handleDeleteContact(roomId)
+    })
 
     socket.on("disconnect", async () => {
         /*const userId = socket.userId;
