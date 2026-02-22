@@ -25,7 +25,9 @@ const socketAuthMiddleware = async (socket, next) => {
             process.env.ACCESS_TOKEN_SECRET
         );
 
-        const user = await User.findById(decoded._id).select("-password");
+        console.log("decoded", decoded)
+
+        const user = await User.findById(decoded.id).select("-password");
 
         if (!user) {
             console.log("❌ User not found");
