@@ -32,25 +32,7 @@ export const socket = new Server(server, {
     }
 })
 
-
-
-socket.use((socket, next) => {
-    const token = socket.handshake?.auth?.token
-    console.log("socket-", socket.handshake?.auth)
-
-    if (!token) {
-        console.log("⚠️ No token provided, connecting as guest");
-        return next(); // allow guest
-    }
-
-    try {
-        socket.userId = token
-        next()
-    } catch (error) {
-        console.log("❌ Token verification failed:", error);
-        return next();
-    }
-})
+socket.use(socketAuthMiddleware)
 
 const onlineUsers = new Map();
 
@@ -98,7 +80,7 @@ socket.on("connect", (socket) => {
     socket.on("messages:seen", async ({ roomId, userId }) => handleMessageSeen(roomId, userId))
 
     socket.on("deleteContact", async ({ roomId }) => {
-        console.log("deleteContact socket called",roomId)
+        console.log("deleteContact socket called", roomId)
         handleDeleteContact(roomId)
     })
 

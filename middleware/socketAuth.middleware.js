@@ -1,81 +1,47 @@
-import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
-import cookie from "cookie"
+import cookie from "cookie";
 
-
-const socketAuthMiddleware = async (socket,next) => {
-    console.log("hi")
+const socketAuthMiddleware = async (socket, next) => {
     try {
-        
-        const token = socket?.handshake?.auth?.token;
+        const rawCookies = socket.handshake.headers.cookie;
 
-        console.log("socket token",token)
-
-        if(!token) {
-            throw new ApiError(400,"Authentication token missing");
+        if (!rawCookies) {
+            console.log("❌ No cookies found");
+            return next(); // allow guest if you want
         }
 
-        const decoded = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
+        const parsedCookies = cookie.parse(rawCookies);
 
-        console.log("decoded token",decoded)
+        const token = parsedCookies.accessToken;
 
-        const user = await User.findById(decoded.id).select("-password")
-
-        if(!user) {
-            throw new ApiError(404,"User not found");
+        if (!token) {
+            console.log("❌ No accessToken in cookie");
+            return next();
         }
 
-        socket.user = user
+        const decoded = jwt.verify(
+            token,
+            process.env.ACCESS_TOKEN_SECRET
+        );
 
-        next()
-    }
+        const user = await User.findById(decoded._id).select("-password");
 
-    catch(err) {
-        console.log("error found",err)
-        throw new ApiError(400,"Error found",err)
-    }
-}
-
-
-/*
-const socketAuthMiddleware = async (socket,next) => {
-    console.log("hi")
-    try {
-        const cookies = cookie.parse(socket.handshake.headers.cookie || "")
-        console.log(cookies)
-
-        const token = cookie.accessToken;
-
-        //const token = socket?.handshake?.auth?.token
-
-        console.log(token)
-
-        if(!token) {
-            throw new ApiError(400,"Authentication token missing");
+        if (!user) {
+            console.log("❌ User not found");
+            return next();
         }
 
-        const decoded = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
+        socket.user = user;
+        socket.userId = user._id;
 
-        console.log("decoded token",decoded)
+        console.log("✅ Socket authenticated:", user._id);
 
-        const user = await User.findById(decoded.id).select("-password")
-
-        if(!user) {
-            throw new ApiError(404,"User not found");
-        }
-
-        socket.user = user
-
-        next()
+        next();
+    } catch (err) {
+        console.log("❌ Socket auth error:", err.message);
+        next(); // do NOT throw
     }
+};
 
-    catch (err) {
-    console.log("❌ Socket auth error:", err.message);
-    throw new ApiError(400,"error in connection",err)
-    }
-    next()
-}
-*/
-
-export {socketAuthMiddleware}
+export { socketAuthMiddleware };
