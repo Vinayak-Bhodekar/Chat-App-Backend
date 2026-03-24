@@ -319,6 +319,10 @@ const handleDeleteMessages = async (socket, messageIds, roomId) => {
       console.log("Unauthorized user");
       return;
     }
+    if (!roomId) {
+      console.log("room Id is required");
+      return;
+    }
 
     const messages = await Message.find({
       _id: { $in: messageIds },

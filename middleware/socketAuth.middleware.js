@@ -5,7 +5,7 @@ import cookie from "cookie";
 const socketAuthMiddleware = async (socket, next) => {
     try {
         const rawCookies = socket.handshake.headers.cookie;
-        console.log("rawCookies", socket.handshake)
+
         if (!rawCookies) {
             console.log("❌ No cookies found");
             return next(); // allow guest if you want
