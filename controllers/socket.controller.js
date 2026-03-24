@@ -222,6 +222,8 @@ const handleAcceptRequest = async (userId, requestId, obj) => {
       }
     })
 
+
+
     socket.to(friendUser.socketId).emit("friend-added", {
       contact: {
         friend: await User.findById(userId).select(
@@ -240,6 +242,7 @@ const handleAcceptRequest = async (userId, requestId, obj) => {
     console.log("error in accept request", error)
   }
 }
+
 
 const handleMessageSeen = async (roomId, userId) => {
   if (!roomId) {
@@ -273,69 +276,79 @@ const handleMessageSeen = async (roomId, userId) => {
 };
 
 const handleDeleteContact = async (roomId) => {
-  console.log("🔥 Delete contact called");
-  console.log("roomId received:", roomId);
-
   if (!roomId) {
-    console.log("❌ roomId missing");
     throw new ApiError(400, "roomId is required");
   }
 
   try {
-    const room = await Room.findById(roomId);
-    console.log("Room found:", room);
+    await Message.deleteMany({ room: roomId })
+    await RoomKey.deleteMany({ roomId: roomId })
+    await Request.findOneAndDelete({
+      $or: [
+        {
+          sender: userId,
+          receiver: receiverId
+        },
+        {
+          sender: receiverId,
+          receiver: userId
+        }
+      ]
+    })
+    const result = await Room.findByIdAndDelete(roomId);
 
-    if (!room) {
-      console.log("❌ Room not found in DB");
+    if (!result) {
+      throw new ApiError(404, "Room not found");
+    }
+
+    socket.to(roomId).emit("contact-deleted", {
+      roomId,
+    });
+
+  } catch (error) {
+    console.error("Error while deleting contact:", error);
+    throw error;
+  }
+}
+
+const handleDeleteMessages = async (socket, messageIds, roomId) => {
+  try {
+    const userId = socket.user?._id;
+
+    if (!userId) {
+      console.log("Unauthorized user");
       return;
     }
 
-    console.log("Room members:", room.members);
-
-    const [user1Id, user2Id] = room.members;
-
-    console.log("User1:", user1Id);
-    console.log("User2:", user2Id);
-
-    const deletedMessages = await Message.deleteMany({ room: roomId });
-    console.log("Messages deleted:", deletedMessages.deletedCount);
-
-    const deletedKeys = await RoomKey.deleteMany({ roomId });
-    console.log("RoomKeys deleted:", deletedKeys.deletedCount);
-
-    const deletedRequest = await Request.deleteOne({
-      $or: [
-        { sender: user1Id, receiver: user2Id },
-        { sender: user2Id, receiver: user1Id }
-      ]
+    const messages = await Message.find({
+      _id: { $in: messageIds },
+      sender: userId
     });
 
-    console.log("Request deleted:", deletedRequest.deletedCount);
-
-    const deletedRoom = await Room.findByIdAndDelete(roomId);
-    console.log("Room deleted:", deletedRoom);
-
-    const user1 = await User.findById(user1Id);
-    const user2 = await User.findById(user2Id);
-
-    console.log("User1 socketId:", user1?.socketId);
-    console.log("User2 socketId:", user2?.socketId);
-
-    if (user1?.socketId) {
-      console.log("📡 Emitting to user1");
-      socket.to(user1.socketId).emit("contact-delete", { roomId });
+    if (!messages.length) {
+      console.log("No valid messages to delete");
+      return;
     }
 
-    if (user2?.socketId) {
-      console.log("📡 Emitting to user2");
-      socket.to(user2.socketId).emit("contact-delete", { roomId });
-    }
+    const validMessageIds = messages.map((msg) => msg._id);
 
-    console.log("✅ Delete flow finished");
+    await Message.deleteMany({
+      _id: { $in: validMessageIds }
+    });
+
+
+    socket.to(roomId).emit("messagesDeleted", {
+      messageIds: validMessageIds
+    });
+
+    socket.emit("messagesDeleted", {
+      messageIds: validMessageIds
+    });
+
+    console.log("Deleted messages:", validMessageIds);
 
   } catch (error) {
-    console.error("❌ Error while deleting contact:", error);
-    throw error;
+    console.log("Delete error:", error);
   }
 };
 
@@ -349,5 +362,6 @@ export {
   handleSendRequest,
   handleAcceptRequest,
   handleMessageSeen,
-  handleDeleteContact
+  handleDeleteContact,
+  handleDeleteMessages
 };

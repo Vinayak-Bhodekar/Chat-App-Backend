@@ -15,7 +15,8 @@ import {
     handleSendRequest,
     handleAcceptRequest,
     handleMessageSeen,
-    handleDeleteContact
+    handleDeleteContact,
+    handleDeleteMessages
 } from "./controllers/socket.controller.js"
 import { User } from "./models/user.model.js"
 
@@ -83,6 +84,8 @@ socket.on("connect", (socket) => {
         console.log("deleteContact socket called", roomId)
         handleDeleteContact(roomId)
     })
+
+    socket.on("deleteMessage", async ({ messageIds, roomId }) => handleDeleteMessages(socket, messageIds, roomId))
 
     socket.on("disconnect", async () => {
         /*const userId = socket.userId;
