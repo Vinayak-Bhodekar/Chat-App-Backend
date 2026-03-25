@@ -85,7 +85,7 @@ socket.on("connect", (socket) => {
         handleDeleteContact(roomId)
     })
 
-    socket.on("deleteMessage", async ({ messageIds, roomId }) => handleDeleteMessages(socket, messageIds, roomId))
+    socket.on("deleteMessage", async ({ messageIds, roomId }) => handleDeleteMessages(socket, messageIds))
 
     socket.on("disconnect", async () => {
         /*const userId = socket.userId;

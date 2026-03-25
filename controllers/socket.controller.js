@@ -110,7 +110,7 @@ const handleConnected = async (userId, socketId) => {
 }
 
 const handleSendRequest = async (userId, receiverId) => {
-  console.log("Request send called")
+
   if (!receiverId) {
     console.log("A receiver Id is required")
     return;
@@ -134,8 +134,6 @@ const handleSendRequest = async (userId, receiverId) => {
         }
       ]
     })
-
-    console.log(existedRequest, "hiiii")
 
     const user = await User.findById(receiverId)
 
@@ -311,23 +309,26 @@ const handleDeleteContact = async (roomId) => {
   }
 }
 
-const handleDeleteMessages = async (socket, messageIds, roomId) => {
+const handleDeleteMessages = async (socket, messageIds) => {
   try {
     const userId = socket.user?._id;
 
+    console.log("messageIds-", messageIds);
     if (!userId) {
       console.log("Unauthorized user");
       return;
     }
-    if (!roomId) {
-      console.log("room Id is required");
-      return;
-    }
+
 
     const messages = await Message.find({
       _id: { $in: messageIds },
       sender: userId
     });
+
+    console.log("message- ", messages[0]);
+
+    const roomId = messages[0]?.room;
+
 
     if (!messages.length) {
       console.log("No valid messages to delete");
@@ -339,6 +340,7 @@ const handleDeleteMessages = async (socket, messageIds, roomId) => {
     await Message.deleteMany({
       _id: { $in: validMessageIds }
     });
+
 
 
     socket.to(roomId).emit("messagesDeleted", {
