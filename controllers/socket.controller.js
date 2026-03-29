@@ -343,13 +343,10 @@ const handleDeleteMessages = async (socket, messageIds) => {
 
 
 
-    socket.to(roomId).emit("messagesDeleted", {
+    socket.to(roomId.toString()).emit("messagesDeleted", {
       messageIds: validMessageIds
     });
 
-    socket.emit("messagesDeleted", {
-      messageIds: validMessageIds
-    });
 
     console.log("Deleted messages:", validMessageIds);
 

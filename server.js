@@ -58,9 +58,9 @@ socket.on("connect", (socket) => {
     }
 
     socket.on("joinRoom", (roomId, userName) => {
-        socket.join(roomId?._id);
-        console.log(`${userName} joined room ${roomId?._id}`)
-        socket.to(roomId?._id).emit("user:joined", { userId, userName })
+        socket.join(roomId?._id.toString());
+        console.log(`${userName} joined room ${roomId?._id.toString()}`)
+        socket.to(roomId?._id.toString()).emit("user:joined", { userId, userName })
     })
 
     socket.on("typing", ({ roomId, profile }) => {
