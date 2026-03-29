@@ -72,7 +72,7 @@ socket.on("connect", (socket) => {
         socket.to(roomId._id).emit("user:stopTyping", { userId: socket.userId })
     })
 
-    socket.on("sendMessage", async ({ roomId, senderId, content }) => handleSendMessage(socket, roomId, senderId, content))
+    socket.on("sendMessage", async ({ roomId, senderId, content }) => handleSendMessage(socket.server, roomId, senderId, content))
 
     socket.on("sendRequest", async ({ userId, receiverId }) => handleSendRequest(userId, receiverId))
 
