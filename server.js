@@ -27,7 +27,7 @@ const server = http.createServer(app)
 
 export const socket = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "https://chat-app-front-end-tan.vercel.app/",
         methods: ["GET", "POST"],
         credentials: true
     }
